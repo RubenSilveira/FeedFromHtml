@@ -1,0 +1,7 @@
+﻿@inject FeedFromHtml.IFeedConfigProvider FeedConfigProvider
+@{
+    foreach (FeedFromHtml.FeedConfig feedConfig in FeedConfigProvider.EnabledFeeds)
+    {
+        <link rel="alternate" type="application/rss+xml" title="@feedConfig.Title" href="/rss/@feedConfig.FeedId"/>
+    }
+}

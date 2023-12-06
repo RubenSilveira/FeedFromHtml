@@ -46,12 +46,13 @@ public class InCodeFeedConfigProvider : IFeedConfigProvider
     ];
 
     private readonly ILogger<InCodeFeedConfigProvider> logger;
-    private readonly Dictionary<string, FeedConfig> feedConfigs;
+    private readonly Dictionary<string, FeedConfig> feedConfigs = [];
+
+    public FeedConfig[] EnabledFeeds => [.. feedConfigs.Values.Where(feedConfig => feedConfig.Enabled).OrderBy(feedConfig => feedConfig.Title)];
 
     public InCodeFeedConfigProvider(ILogger<InCodeFeedConfigProvider> _logger)
     {
         logger = _logger;
-        feedConfigs = [];
 
         logger.LogInformation("Initializing");
 
@@ -77,20 +78,13 @@ public class InCodeFeedConfigProvider : IFeedConfigProvider
         logger.LogInformation("Initialized with {feedConfigs.Count} feed configs", feedConfigs.Count);
     }
 
-    public FeedConfig? GetFeedConfig(string? feedId)
+    public FeedConfig? GetFeedConfig(string feedId)
     {
-        if (string.IsNullOrWhiteSpace(feedId))
+        if (false == feedConfigs.ContainsKey(feedId) || false == feedConfigs[feedId].Enabled)
         {
             return null;
         }
 
-        FeedConfig feedConfig = feedConfigs[feedId];
-
-        if (null == feedConfig || false == feedConfig.Enabled)
-        {
-            return null;
-        }
-
-        return feedConfig;
+        return feedConfigs[feedId];
     }
 }

@@ -4,109 +4,100 @@ using HtmlAgilityPack;
 
 namespace FeedFromHtml;
 
-public class DirectFeedRetriever : IFeedRetriever, IDisposable
+public class DirectFeedRetriever : IFeedRetriever
 {
-    private readonly MemoryStream memoryStream = new();
-
-    public long ByteCount => memoryStream.Length;
-
-    public void Dispose()
+    public byte[] Retrieve(FeedConfig feedConfig, string? appRoot)
     {
-        memoryStream.Dispose();
-    }
+        string baseUrl = (appRoot ?? "/") + "rss/";
 
-    public void Retrieve(FeedConfig feedConfig)
-    {
-        memoryStream.Position = 0;
-        memoryStream.SetLength(0);
-
-        using (XmlWriter xml = XmlWriter.Create(memoryStream, new XmlWriterSettings
+        using (MemoryStream memoryStream = new())
         {
-            CloseOutput = false,
-            Encoding = Encoding.UTF8,
-            Indent = true
-        }))
-        {
-            xml.WriteStartDocument();
-
-            xml.WriteStartElement("rss");
-            xml.WriteAttributeString("version", "2.0");
-
-            xml.WriteStartElement("channel");
-
-            xml.WriteElementString("title", feedConfig.Title);
-            xml.WriteElementString("link", feedConfig.Url);
-            xml.WriteElementString("description", feedConfig.Description);
-            xml.WriteElementString("language", feedConfig.Language);
-            xml.WriteElementString("ttl", feedConfig.Ttl.ToString());
-            xml.WriteStartElement("image");
-            xml.WriteElementString("url", feedConfig.ImageUrl);
-            xml.WriteElementString("title", feedConfig.Title);
-            xml.WriteElementString("link", feedConfig.Url);
-            xml.WriteEndElement(); //image
-
-            HtmlDocument htmlDoc = (new HtmlWeb()).Load(feedConfig.Url);
-            HtmlNodeCollection articleNodes = htmlDoc.DocumentNode.SelectNodes(feedConfig.XPathArticlesContainer);
-            if (null == articleNodes)
+            using (XmlWriter xml = XmlWriter.Create(memoryStream, new XmlWriterSettings
             {
-                throw new ApplicationException($"XPathArticlesContainer ({feedConfig.XPathArticlesContainer}) not found");
-            }
-
-            foreach (HtmlNode articleNode in articleNodes)
+                CloseOutput = false,
+                Encoding = Encoding.UTF8,
+                Indent = true
+            }))
             {
-                HtmlNode node;
+                xml.WriteStartDocument();
 
-                xml.WriteStartElement("item");
+                xml.WriteStartElement("rss");
+                xml.WriteAttributeString("version", "2.0");
 
-                node = articleNode.SelectSingleNode(feedConfig.XPathTitleContainer);
-                if (null == node)
+                xml.WriteStartElement("channel");
+
+                xml.WriteElementString("title", feedConfig.Title);
+                xml.WriteElementString("link", feedConfig.Url);
+                xml.WriteElementString("description", feedConfig.Description);
+                xml.WriteElementString("language", feedConfig.Language);
+                xml.WriteElementString("ttl", feedConfig.Ttl.ToString());
+                xml.WriteStartElement("link", "http://www.w3.org/2005/Atom");
+                xml.WriteAttributeString("rel", "self");
+                xml.WriteAttributeString("type", "application/rss+xml");
+                xml.WriteAttributeString("href", $"{baseUrl}{feedConfig.FeedId}");
+                xml.WriteEndElement(); //link
+                xml.WriteStartElement("image");
+                xml.WriteElementString("url", feedConfig.ImageUrl);
+                xml.WriteElementString("title", feedConfig.Title);
+                xml.WriteElementString("link", feedConfig.Url);
+                xml.WriteEndElement(); //image
+
+                HtmlDocument htmlDoc = (new HtmlWeb()).Load(feedConfig.Url);
+                HtmlNodeCollection articleNodes = htmlDoc.DocumentNode.SelectNodes(feedConfig.XPathArticlesContainer);
+                if (null == articleNodes)
                 {
-                    throw new ApplicationException($"XPathTitleContainer ({feedConfig.XPathTitleContainer}) not found");
+                    throw new ApplicationException($"XPathArticlesContainer ({feedConfig.XPathArticlesContainer}) not found");
                 }
-                xml.WriteStartElement("title");
-                xml.WriteCData(node.InnerText.Trim());
-                xml.WriteEndElement();
 
-                node = articleNode.SelectSingleNode(feedConfig.XPathHrefContainer);
-                if (null == node)
+                foreach (HtmlNode articleNode in articleNodes)
                 {
-                    throw new ApplicationException($"XPathHrefContainer ({feedConfig.XPathHrefContainer}) not found");
-                }
-                xml.WriteElementString("link", node.Attributes["href"].Value.Trim());
-                xml.WriteElementString("guid", node.Attributes["href"].Value.Trim());
-                
-                using (StringWriter sw = new())
-                {
-                    foreach (string xPathDescriptionComponent in feedConfig.XPathDescriptionComponents)
+                    HtmlNode node;
+
+                    xml.WriteStartElement("item");
+
+                    node = articleNode.SelectSingleNode(feedConfig.XPathTitleContainer);
+                    if (null == node)
                     {
-                        node = articleNode.SelectSingleNode(xPathDescriptionComponent);
-                        if (null == node)
+                        throw new ApplicationException($"XPathTitleContainer ({feedConfig.XPathTitleContainer}) not found");
+                    }
+                    xml.WriteStartElement("title");
+                    xml.WriteCData(node.InnerText.Trim());
+                    xml.WriteEndElement();
+
+                    node = articleNode.SelectSingleNode(feedConfig.XPathHrefContainer);
+                    if (null == node)
+                    {
+                        throw new ApplicationException($"XPathHrefContainer ({feedConfig.XPathHrefContainer}) not found");
+                    }
+                    xml.WriteElementString("link", node.Attributes["href"].Value.Trim());
+                    xml.WriteElementString("guid", node.Attributes["href"].Value.Trim());
+                    
+                    using (StringWriter sw = new())
+                    {
+                        foreach (string xPathDescriptionComponent in feedConfig.XPathDescriptionComponents)
                         {
-                            throw new ApplicationException($"XPathDescriptionComponent ({xPathDescriptionComponent}) not found");
+                            node = articleNode.SelectSingleNode(xPathDescriptionComponent);
+                            if (null == node)
+                            {
+                                throw new ApplicationException($"XPathDescriptionComponent ({xPathDescriptionComponent}) not found");
+                            }
+                            sw.WriteLine(node.OuterHtml);
                         }
-                        sw.WriteLine(node.OuterHtml);
+
+                        xml.WriteStartElement("description");
+                        xml.WriteCData(sw.ToString());
+                        xml.WriteEndElement();
                     }
 
-                    xml.WriteStartElement("description");
-                    xml.WriteCData(sw.ToString());
-                    xml.WriteEndElement();
+                    xml.WriteEndElement(); //item
                 }
 
-                xml.WriteEndElement(); //item
+                xml.WriteEndElement(); //channel
+                xml.WriteEndElement(); //rss
+                xml.WriteEndDocument();
             }
 
-            xml.WriteEndElement(); //channel
-            xml.WriteEndElement(); //rss
-            xml.WriteEndDocument();
+            return memoryStream.ToArray();
         }
-
-        memoryStream.Position = 0;
-    }
-
-    public async void Write(Stream stream)
-    {
-        memoryStream.Position = 0;
-        await memoryStream.CopyToAsync(stream);
-        memoryStream.Position = 0;
     }
 }

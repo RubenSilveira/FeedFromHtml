@@ -1,0 +1,14 @@
+﻿@page
+@{
+    Layout = "_Layout";
+}
+@model FeedFromHtml.Pages.FeedsModel
+<ul class="list-group list-group-flush">
+    @foreach(FeedFromHtml.FeedConfig feedConfig in @Model.feedConfigProvider.EnabledFeeds) {
+        <li class="list-group-item">
+            @feedConfig.Title
+            <a class="link-primary" href="~/rss/@feedConfig.FeedId">Feed</a>
+            <a class="link-primary" href="@feedConfig.Url" target="_blank" rel="noopener noreferrer">Source</a>
+        </li>
+    }
+</ul>

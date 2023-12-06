@@ -1,8 +1,9 @@
 # FeedFromHtml
 
-Scrapes an online web page and converts it to RSS.
+Server application that scrapes online web pages and serves them as RSS
+feeds.
 
-This is a very early release; only the basic works.
+These are very early releases, so only the bare minimum works.
 
 ## Installation
 
@@ -16,7 +17,7 @@ No installation package is provided. Build and deploy at will.
 
 ## Development / Build
 
-Developed and tested on Intel macOS 12 (Monterey), using Visual Studio
+Developed on Intel macOS 12 (Monterey), using Visual Studio
 Code:
 - Framework:
 	- .NET 8.0 SDK.
@@ -28,21 +29,29 @@ Code:
 - Dependencies:
 	- [HtmlAgilityPack](https://html-agility-pack.net).
 
+Tested on Linux via Azure App Service.
+
 ## To Do
 - Config from database;
 - Scheduled refresh to database;
 - Serve from database;
 - In-memory and HTTP caching;
 - Follow links and enrich items (date/time, content/media, etc.);
-- Frontend.
+- Full-featured frontend.
 
 ## License
 
 Published under [The
-MIT License](https://github.com/RubenSilveira/WinAwake/blob/main/LICENSE).
+MIT License](https://github.com/RubenSilveira/FeedFromHtml/blob/main/LICENSE).
 
 ## Changelog
 
+### v2 (2023-12-06)
+	Features:
+	- RSS: Added rel=self for improved compatibility
+	- Frontend: Minimal initial version with feed directory
+	- Frontend: Available feeds advertised as meta tags
+
 ### v1 (2023-12-02)
 	Features:
-	- Initial version.
+	- RSS: Initial version.

@@ -1,0 +1,24 @@
+﻿@page
+@{
+    Layout = "_Layout";
+}
+@model FeedFromHtml.Pages.ErrorModel
+<div class="card">
+    <div class="card-header">
+        Error
+    </div>
+    <div class="card-body">
+        <div>
+            The request you made to @Model.RequestPath@Request.QueryString with identifier @HttpContext.TraceIdentifier
+            (@System.Diagnostics.Activity.Current?.Id) failed at @Model.RequestTimestamp.ToString("O") (UTC)
+            with the following status:
+        </div>
+        <ul class="list-group mt-2">
+            <li class="list-group-item">
+                <div class="fw-bold text-error">
+                    @(Model.Error?.Message ?? "No details were provided")
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
