@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Net;
+using System.Text;
 using System.Xml;
 using HtmlAgilityPack;
 
@@ -61,7 +62,7 @@ public class DirectFeedRetriever : IFeedRetriever
                         throw new ApplicationException($"XPathTitleContainer ({feedConfig.XPathTitleContainer}) not found");
                     }
                     xml.WriteStartElement("title");
-                    xml.WriteCData(node.InnerText.Trim());
+                    xml.WriteCData(WebUtility.HtmlDecode(node.InnerText.Trim()));
                     xml.WriteEndElement();
 
                     node = articleNode.SelectSingleNode(feedConfig.XPathHrefContainer);

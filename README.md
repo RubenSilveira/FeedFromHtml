@@ -46,6 +46,12 @@ MIT License](https://github.com/RubenSilveira/FeedFromHtml/blob/main/LICENSE).
 
 ## Changelog
 
+### v3 (2025-03-09)
+	Bugs:
+	- RSS: Correctly decode HTML entities
+	Updates:
+	- Updated HtmlAgilityPack to version 1.11.74
+
 ### v2 (2023-12-06)
 	Features:
 	- RSS: Added rel=self for improved compatibility
